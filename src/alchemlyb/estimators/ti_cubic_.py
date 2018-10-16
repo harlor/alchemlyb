@@ -62,7 +62,7 @@ class TICUBIC(BaseEstimator):
         dl = means.reset_index()[means.index.names[:]].diff().iloc[1:].values
         ls = np.array(means.reset_index()[means.index.names[:]])
 
-        segements = []
+        segments = []
         segstart = 0
         ill = [0] * len(l_types)
         nl = 0
@@ -73,14 +73,14 @@ class TICUBIC(BaseEstimator):
                     inl = np.array(np.array(l, dtype=bool), dtype=int)
                     l_name = l_types[list(inl - ill).index(1)]
                     ill = inl
-                    segements.append((segstart, i + 1, l_name))
+                    segments.append((segstart, i + 1, l_name))
 
                 if i + 1 < len(ls):
                     nl = list(np.array(ls[i+1], dtype=bool)).count(True)
                 segstart = i
 
         deltas = np.array([])
-        for segstart, segend, l_name in segements:
+        for segstart, segend, l_name in segments:
             ls = np.transpose(np.array(means.reset_index()[[l_name]]))[0][segstart:segend]
             values = np.transpose(np.array(means[l_name[:-7]])[segstart:segend])
             f = scipy.interpolate.CubicSpline(ls, values)
