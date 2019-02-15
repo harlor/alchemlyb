@@ -2,6 +2,7 @@
 
 """
 import numpy as np
+import pandas as pd
 from pymbar.timeseries import (statisticalInefficiency,
                                detectEquilibration,
                                subsampleCorrelatedData, )
@@ -203,3 +204,42 @@ def equilibrium_detection(df, series=None, lower=None, upper=None, step=None):
         df = slicing(df, lower=lower, upper=upper, step=step)
 
     return df
+
+
+def uncorrelate_dhdl(dhdls, dfs, lower=None):
+        """
+        :param dfs: Series
+            List of data to uncorrelate
+        :return: Dataframe
+            uncorrelated Dataframe of `dfs`
+        """
+        l_values_ = []
+
+        for dhdl_ in dhdls:
+            if len(dhdl_.columns) == 1:
+                l_values_.append(list([dhdl_.xs(0, level=0).index.values[0]]))
+            else:
+                l_values_.append(list(dhdl_.xs(0, level=0).index.values[0]))
+
+        dl = []
+        for i, l in enumerate(l_values_):
+            dli = []
+            for j, lij in enumerate(l):
+                dlij = False
+                if i < len(l_values_) - 1:
+                    if l_values_[i+1][j] != lij:
+                        dlij = True
+                if i > 0:
+                    if l_values_[i - 1][j] != lij:
+                        dlij = True
+                dli.append(dlij)
+            dl.append(dli)
+
+        uncorrelated_dfs = []
+        for dhdl_, l, df in zip(dhdls, dl, dfs):
+            ind = np.array(l, dtype=bool)
+            ind = np.array(ind, dtype=int)
+            dhdl_sum = dhdl_.dot(ind)
+            uncorrelated_dfs.append(statistical_inefficiency(df, dhdl_sum, lower, conservative=False))
+
+        return pd.concat(uncorrelated_dfs)
